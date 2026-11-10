@@ -61,6 +61,7 @@ function gnDraw() {
   for (var k = 0; k < out.length; k++) if (/^—— 第 \d+ 天 ——$/.test(out[k])) dayIdx.push(k);
   var cut = 0;
   if (!r.done && dayIdx.length >= 2) cut = dayIdx[dayIdx.length - 2];
+  if (r.done && dayIdx.length >= 1) cut = dayIdx[dayIdx.length - 1];   // 走完了：只摊开第 7 天、集市和回头看（牛网2：整页太长，结尾看不清）
   var oh = '', lh = '';
   for (k = 0; k < out.length; k++) {
     var h = gnLineHtml(out[k], k >= gnPrevLen && gnPrevLen > 0);

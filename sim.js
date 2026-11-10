@@ -1,6 +1,6 @@
-// 赶牛 网页版的规矩（第五个 第 16 天 18:45，照 ~/碰/赶牛/牛.py 第六版一行一行搬；test/对.py 拿随机动作逐行对 py）
+// 赶牛 网页版的规矩（第五个 第 16 天 18:45，照 ~/碰/赶牛/牛.py 一行一行搬，18:50 跟到第七版；test/对.py 拿随机动作逐行对 py）
 var GN_SLOTS = ['早上', '中午', '傍晚'];
-var GN_ACTS = ['回棚', '赶来', '牵', '不管', '拴'];
+var GN_ACTS = ['回棚', '赶来', '牵回棚', '不管', '拴'];
 var GN_DAYS = 7;
 
 function gnNew() {
@@ -41,6 +41,7 @@ function gnRunDog(s, kind, own) {
     return out;
   }
   var near = (s.cow === '近坡' || s.cow === '棚边');
+  var prior = s.runs_today;
   var heat = (near ? 1 : 2) + s.runs_today + (eager ? 1 : 0);
   s.runs_today += 1;
   s.fear += eager ? 2 : 1;
@@ -51,6 +52,7 @@ function gnRunDog(s, kind, own) {
     s.cow = '你跟前';
     if (heat >= 3) out.push('牛从老远一路跑过来，宾果跑得正热，到你跟前一个急刹，后爪在地上犁出两道印子，喘着趴下了，眼睛还盯着牛。牛在你跟前站住了。');
     else if (heat === 2 && !near) out.push('这回跑了老远。牛从洼地那头一路小跑过来，到你跟前站住了，喘着。宾果在后头三四步外刹住，趴下，看你。');
+    else if (heat === 2 && prior === 0) out.push('它一早就憋着劲，这回蹿得更猛。牛从坡上一路跑过来，到你跟前站住了，喘着。宾果在后头三四步外刹住，趴下，看你。');
     else if (heat === 2) out.push('今天它已经跑过一趟了，这回蹿得更猛。牛从坡上一路跑过来，到你跟前站住了，喘着。宾果在后头三四步外刹住，趴下，看你。');
     else if (s.skill >= 2) out.push('没一会儿，牛一路小跑过来，到你跟前站住了。宾果这回没等你看它，自己就在三四步外趴下了，尾巴扫着地。');
     else out.push('没一会儿，牛一路小跑过来，到你跟前站住了，喘着。宾果在后头三四步外趴下，舌头伸着，看你。');
@@ -92,15 +94,16 @@ function gnRun(acts) {
   out.push('—— 第 1 天 ——');
   out.push('这只狗叫宾果，是去年冬天抱回来的，一团黑毛，嘴上一圈白。开春你教了它一样本事：一声"去把牛赶回来"，它就去把那头黄母牛一路撵回棚里。教了一个月，它学得很好。');
   out.push('秋天卡伯里集市上有一项：训练得最好的牧羊犬，奖两块钱。比法是牛放在镇外草地上，你在评委台前喊一声"去把牛赶来"，看它能不能把牛赶到评委跟前。离集市还有七天。');
-  out.push('牛傍晚得在棚里，好挤奶。');
+  out.push('你每天站在场院里，牛棚就在你身后。屋后是坡，东边是洼地。牛傍晚得在棚里，好挤奶。');
   var i = 0, done = false, milk, note, a, b;
   while (!done) {
     if ((s.slot === 0 || s.slot === 1) && (s.cow === '棚' || s.cow === '你跟前')) gnCowGoesOut(s);
     else if ((s.slot === 1 || s.slot === 2) && s.cow === '近坡' && s.fear < 3) s.cow = '洼地';
     out.push('〔第 ' + s.day + ' 天 ' + GN_SLOTS[s.slot] + '〕' + gnWhere(s) + ' ' + gnDog(s, s.tied));
-    out.push('（能做：回棚 / 赶来 / 牵 / 不管 / 拴）');
+    out.push('（能做：回棚 / 赶来 / 牵回棚 / 不管 / 拴）');
     if (i >= acts.length) return {out: out, done: false, ask: ASK_DAY, s: s};
     a = acts[i]; i += 1;
+    if (a === '牵') a = '牵回棚';
     out.push('> ' + a);
     if (GN_ACTS.indexOf(a) < 0) {
       out.push('不认得这个。能做：' + GN_ACTS.join(' / '));
@@ -137,7 +140,7 @@ function gnRun(acts) {
         }
         s.pending = 0;
       }
-    } else if (a === '牵') {
+    } else if (a === '牵回棚') {
       if (s.cow === '洼地') out.push('你走到东边洼地才找着它，牵着往回走，它走得慢，一路吃两口。');
       else if (s.cow === '棚') out.push('牛本来就在棚里。');
       else out.push('你把牛牵进了棚。');
