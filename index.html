@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>赶牛</title>
+<style>
+  body { margin: 0; background: #f4efe4; color: #2b2620; font: 17px/1.75 "PingFang SC", "Noto Serif SC", "Songti SC", serif; }
+  #wrap { max-width: 680px; margin: 0 auto; padding: 28px 22px 140px; }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: 2px; }
+  .sub { color: #8a7f6c; font-size: 14px; margin-bottom: 18px; }
+  #older { margin: 0 0 10px; }
+  #older summary { color: #8a7f6c; font-size: 14px; cursor: pointer; }
+  #older .lines { color: #6f6656; font-size: 15px; }
+  p { margin: 0 0 6px; }
+  .day { margin: 18px 0 6px; color: #8a5a2b; font-weight: bold; letter-spacing: 1px; }
+  .slot { margin-top: 12px; color: #4a4336; }
+  .slot b { color: #8a5a2b; font-weight: normal; }
+  .me { color: #6b7d4a; margin-top: 4px; }
+  .new { background: #fff8e6; border-left: 3px solid #d9a441; padding: 2px 8px; margin-left: -11px; }
+  .ask { color: #b0461f; }
+  .end { color: #6f6656; font-size: 15px; white-space: pre-wrap; }
+  #btns { position: fixed; left: 0; right: 0; bottom: 0; background: #ebe3d2; border-top: 1px solid #d2c6ad; padding: 12px 10px 16px; text-align: center; }
+  #btns button { font: inherit; font-size: 17px; margin: 4px 6px; padding: 6px 18px; border: 1px solid #a8977a; border-radius: 6px; background: #fffaf0; color: #2b2620; cursor: pointer; }
+  #btns button:hover { background: #fff2d6; }
+  #btns button.stop { border-color: #b0461f; color: #b0461f; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>赶牛</h1>
+  <div class="sub">一天三回，每回挑一样。</div>
+  <details id="older"><summary>前几天</summary><div class="lines" id="olderLines"></div></details>
+  <div id="log"></div>
+</div>
+<div id="btns"></div>
+<script src="sim.js"></script>
+<script>
+var gnActs = [];
+var gnPrevLen = 0;
+
+function gnEsc(t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+function gnLineHtml(t, isNew) {
+  var cls = '';
+  if (/^—— /.test(t)) cls = 'day';
+  else if (/^〔/.test(t)) { t = t.replace(/^〔(.*?)〕/, '<b>$1</b>　'); cls = 'slot'; return '<p class="' + cls + (isNew ? ' new' : '') + '">' + t + '</p>'; }
+  else if (/^> /.test(t)) { cls = 'me'; t = '你：' + t.slice(2); }
+  else if (/^（它在回头看你/.test(t)) { cls = 'ask'; t = '（它在回头看你。）'; }
+  else if (/^（能做/.test(t)) return '';
+  else if (/^  /.test(t)) cls = 'end';
+  if (t === '') return '<p>&nbsp;</p>';
+  return '<p class="' + cls + (isNew ? ' new' : '') + '">' + gnEsc(t) + '</p>';
+}
+
+function gnDraw() {
+  var r = gnRun(gnActs);
+  var out = r.out;
+  // 只把最近两天摊开，更早的收进"前几天"（走完了全摊开）
+  var dayIdx = [];
+  for (var k = 0; k < out.length; k++) if (/^—— 第 \d+ 天 ——$/.test(out[k])) dayIdx.push(k);
+  var cut = 0;
+  if (!r.done && dayIdx.length >= 2) cut = dayIdx[dayIdx.length - 2];
+  var oh = '', lh = '';
+  for (k = 0; k < out.length; k++) {
+    var h = gnLineHtml(out[k], k >= gnPrevLen && gnPrevLen > 0);
+    if (k < cut) oh += h; else lh += h;
+  }
+  document.getElementById('older').style.display = cut > 0 ? '' : 'none';
+  document.getElementById('olderLines').innerHTML = oh;
+  document.getElementById('log').innerHTML = lh;
+  var bh = '';
+  if (r.done) bh = '<button>重来</button>';
+  else for (k = 0; k < r.ask.length; k++) bh += '<button' + (r.ask[k] === '喊站' ? ' class="stop"' : '') + '>' + r.ask[k] + '</button>';
+  var box = document.getElementById('btns');
+  box.innerHTML = bh;
+  var bs = box.querySelectorAll('button');
+  for (k = 0; k < bs.length; k++) bs[k].onclick = gnClick;
+  gnPrevLen = out.length;
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+function gnClick(e) {
+  var a = e.target.textContent;
+  if (a === '重来') { gnActs = []; gnPrevLen = 0; }
+  else { gnPrevLen = gnRun(gnActs).out.length; gnActs.push(a); }
+  gnDraw();
+}
+
+gnDraw();
+</script>
+</body>
+</html>
