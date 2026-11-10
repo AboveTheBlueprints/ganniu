@@ -30,6 +30,7 @@
 <div id="wrap">
   <h1>赶牛</h1>
   <div class="sub">一天三回，每回挑一样。</div>
+  <div id="intro"></div>
   <details id="older"><summary>前几天</summary><div class="lines" id="olderLines"></div></details>
   <div id="log"></div>
 </div>
@@ -63,10 +64,16 @@ function gnDraw() {
   if (!r.done && dayIdx.length >= 2) cut = dayIdx[dayIdx.length - 2];
   if (r.done && dayIdx.length >= 1) cut = dayIdx[dayIdx.length - 1];   // 走完了：只摊开第 7 天、集市和回头看（牛网2：整页太长，结尾看不清）
   var oh = '', lh = '';
+  // 开头那几句（比法、你站在哪）一直留在上面，不收进"前几天"（牛网1：收起来以后要回想比赛的规矩）
+  var intro = 0;
+  while (intro < out.length && !/^〔/.test(out[intro])) intro++;
+  var ih = '';
   for (k = 0; k < out.length; k++) {
     var h = gnLineHtml(out[k], k >= gnPrevLen && gnPrevLen > 0);
-    if (k < cut) oh += h; else lh += h;
+    if (k < intro && cut > 0) ih += h;
+    else if (k < cut) oh += h; else lh += h;
   }
+  document.getElementById('intro').innerHTML = ih;
   document.getElementById('older').style.display = cut > 0 ? '' : 'none';
   document.getElementById('olderLines').innerHTML = oh;
   document.getElementById('log').innerHTML = lh;
